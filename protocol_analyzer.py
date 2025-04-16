@@ -248,7 +248,7 @@ def create_comparison_radar_chart(comparison_data, output_dir):
     # Create normalized scores for each protocol (subjective, based on known properties)
     # BB84
     bb84_scores = [
-        comparison_data['no_eve']['raw_key'][0]/1000,  # Key efficiency
+        comparison_data['no_eve']['raw_key'][0]/1000 if (len(comparison_data['no_eve']['raw_key']) > 0) else 0,  # Key efficiency
         1 if comparison_data['with_eve']['detection'][0] else 0,  # Eve detection
         0.7,  # Implementation simplicity (moderate)
         0.6,  # Quantum resource efficiency (moderate)

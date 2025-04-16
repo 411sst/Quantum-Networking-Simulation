@@ -2,6 +2,8 @@
 # This script implements multiple QKD protocols with advanced features
 
 # Helper function to sum a list
+# Create necessary directories
+exec mkdir -p results
 proc sum {list} {
     set sum 0
     foreach element $list {

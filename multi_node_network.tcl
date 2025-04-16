@@ -2,6 +2,8 @@
 # This script creates a sophisticated 6-node network with advanced topology
 
 # Initialize the simulator
+# Create necessary directories
+exec mkdir -p results
 set ns [new Simulator]
 
 # Enable multicast routing for group communication scenarios
@@ -162,10 +164,15 @@ proc run_multi_hop_qkd {src repeater1 repeater2 dst log} {
     puts $log "Starting Multi-Hop QKD Protocol Simulation"
     puts $log "========================================"
     
-    # Calculate link distances (in km) based on delays
-    set link1_delay [$ns delay $src $repeater1]
-    set link2_delay [$ns delay $repeater1 $repeater2]
-    set link3_delay [$ns delay $repeater2 $dst]
+    # Get link objects
+    set link1 [$ns link $src $repeater1]
+    set link2 [$ns link $repeater1 $repeater2]
+    set link3 [$ns link $repeater2 $dst]
+
+    # Get delays from link objects (converting to ms)
+    set link1_delay [expr [$link1 delay] * 1000]
+    set link2_delay [expr [$link2 delay] * 1000]
+    set link3_delay [expr [$link3 delay] * 1000]
     
     # Convert delays to approximate distances (assuming 5μs/km)
     set link1_dist [expr double($link1_delay) * 1000 / 5]
