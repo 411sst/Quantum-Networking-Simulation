@@ -246,28 +246,41 @@ def create_comparison_radar_chart(comparison_data, output_dir):
                  'Quantum Resource\nEfficiency', 'Error Tolerance']
     
     # Create normalized scores for each protocol (subjective, based on known properties)
+    # Get defaults if data isn't available
+    default_raw_key = 0.0
+    default_qber = 0.0
+    
+    # Helper function to safely get values
+    def safe_get(data_dict, keys, index, default):
+        try:
+            if keys not in data_dict or index >= len(data_dict[keys]):
+                return default
+            return data_dict[keys][index]
+        except (KeyError, IndexError):
+            return default
+    
     # BB84
     bb84_scores = [
-        comparison_data['no_eve']['raw_key'][0]/1000 if (len(comparison_data['no_eve']['raw_key']) > 0) else 0,  # Key efficiency
-        1 if comparison_data['with_eve']['detection'][0] else 0,  # Eve detection
+        safe_get(comparison_data['no_eve'], 'raw_key', 0, default_raw_key)/1000,  # Key efficiency
+        1 if safe_get(comparison_data['with_eve'], 'detection', 0, False) else 0,  # Eve detection
         0.7,  # Implementation simplicity (moderate)
         0.6,  # Quantum resource efficiency (moderate)
-        1 - comparison_data['no_eve']['qber'][0]/0.15  # Error tolerance
+        1 - safe_get(comparison_data['no_eve'], 'qber', 0, default_qber)/0.15  # Error tolerance
     ]
     
     # B92
     b92_scores = [
-        comparison_data['no_eve']['raw_key'][1]/1000,  # Key efficiency
-        1 if comparison_data['with_eve']['detection'][1] else 0,  # Eve detection
+        safe_get(comparison_data['no_eve'], 'raw_key', 1, default_raw_key)/1000,  # Key efficiency
+        1 if safe_get(comparison_data['with_eve'], 'detection', 1, False) else 0,  # Eve detection
         0.9,  # Implementation simplicity (high)
         0.8,  # Quantum resource efficiency (high)
-        1 - comparison_data['no_eve']['qber'][1]/0.12  # Error tolerance
+        1 - safe_get(comparison_data['no_eve'], 'qber', 1, default_qber)/0.12  # Error tolerance
     ]
     
     # E91
     e91_scores = [
-        comparison_data['no_eve']['raw_key'][2]/1000,  # Key efficiency
-        1 if comparison_data['with_eve']['detection'][2] else 0,  # Eve detection
+        safe_get(comparison_data['no_eve'], 'raw_key', 2, default_raw_key)/1000,  # Key efficiency
+        1 if safe_get(comparison_data['with_eve'], 'detection', 2, False) else 0,  # Eve detection
         0.5,  # Implementation simplicity (low)
         0.4,  # Quantum resource efficiency (low)
         0.9  # Error tolerance (high)
@@ -290,26 +303,29 @@ def create_comparison_radar_chart(comparison_data, output_dir):
     b92_scores += b92_scores[:1]
     e91_scores += e91_scores[:1]
     
-    fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))
-    
-    ax.plot(angles, bb84_scores, 'b-', linewidth=2, label='BB84')
-    ax.fill(angles, bb84_scores, 'blue', alpha=0.1)
-    
-    ax.plot(angles, b92_scores, 'r-', linewidth=2, label='B92')
-    ax.fill(angles, b92_scores, 'red', alpha=0.1)
-    
-    ax.plot(angles, e91_scores, 'g-', linewidth=2, label='E91')
-    ax.fill(angles, e91_scores, 'green', alpha=0.1)
-    
-    ax.set_thetagrids(np.degrees(angles[:-1]), categories)
-    ax.set_ylim(0, 1)
-    ax.set_title('Protocol Comparison: Multiple Factors', size=15)
-    ax.legend(loc='upper right')
-    ax.grid(True)
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, 'protocol_radar_comparison.png'), dpi=300)
-    plt.close()
+    try:
+        fig, ax = plt.subplots(figsize=(10, 8), subplot_kw=dict(polar=True))
+        
+        ax.plot(angles, bb84_scores, 'b-', linewidth=2, label='BB84')
+        ax.fill(angles, bb84_scores, 'blue', alpha=0.1)
+        
+        ax.plot(angles, b92_scores, 'r-', linewidth=2, label='B92')
+        ax.fill(angles, b92_scores, 'red', alpha=0.1)
+        
+        ax.plot(angles, e91_scores, 'g-', linewidth=2, label='E91')
+        ax.fill(angles, e91_scores, 'green', alpha=0.1)
+        
+        ax.set_thetagrids(np.degrees(angles[:-1]), categories)
+        ax.set_ylim(0, 1)
+        ax.set_title('Protocol Comparison: Multiple Factors', size=15)
+        ax.legend(loc='upper right')
+        ax.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'protocol_radar_comparison.png'), dpi=300)
+        plt.close()
+    except Exception as e:
+        print(f"Error creating radar chart: {e}")
 
 def main():
     if len(sys.argv) < 4:

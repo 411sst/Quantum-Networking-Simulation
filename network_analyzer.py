@@ -246,88 +246,117 @@ def main():
     output_file = sys.argv[2]
     
     # Create output directories
-    graphs_dir = "graphs"
+    graphs_dir = "graphs/network"
     ensure_directory(graphs_dir)
+    
+    # Check if trace file exists
+    if not os.path.exists(trace_file):
+        print(f"Error: Trace file '{trace_file}' does not exist.")
+        # Generate empty output file with error message
+        with open(output_file, 'w') as f:
+            f.write("=================================================\n")
+            f.write("Network Performance Analysis for QKD Simulation\n")
+            f.write("=================================================\n\n")
+            f.write(f"ERROR: Trace file '{trace_file}' does not exist.\n")
+            f.write("Please run the network simulation first to generate trace files.\n")
+        return
     
     # Parse the trace file
     print(f"Parsing trace file: {trace_file}")
     events = parse_trace_file(trace_file)
     
     if not events:
-        print("No events found in trace file.")
-        sys.exit(1)
+        print("No events found in trace file or file format is incorrect.")
+        # Generate empty output file with error message
+        with open(output_file, 'w') as f:
+            f.write("=================================================\n")
+            f.write("Network Performance Analysis for QKD Simulation\n")
+            f.write("=================================================\n\n")
+            f.write("ERROR: No events found in trace file or file format is incorrect.\n")
+        return
     
     # Calculate performance metrics
     print("Calculating network performance metrics...")
-    times, throughput = calculate_throughput(events)
-    packet_loss_ratio = calculate_packet_loss(events)
-    delays = calculate_end_to_end_delay(events)
-    node_activity = analyze_node_activity(events)
-    queue_delays = analyze_queueing_delay(events)
-    protocol_overhead = analyze_protocol_overhead(events)
+    try:
+        times, throughput = calculate_throughput(events)
+        packet_loss_ratio = calculate_packet_loss(events)
+        delays = calculate_end_to_end_delay(events)
+        node_activity = analyze_node_activity(events)
+        queue_delays = analyze_queueing_delay(events)
+        protocol_overhead = analyze_protocol_overhead(events)
     
-    # Generate visualizations
-    print("Generating visualizations...")
-    plot_throughput(times, throughput, os.path.join(graphs_dir, 'throughput.png'))
-    
-    if delays:
-        plot_delay_histogram(delays, os.path.join(graphs_dir, 'delay_histogram.png'))
-    
-    plot_node_activity(node_activity, os.path.join(graphs_dir, 'node_activity.png'))
-    plot_queue_delays(queue_delays, os.path.join(graphs_dir, 'queue_delays.png'))
-    
-    # Write statistics to output file
-    print(f"Writing statistics to: {output_file}")
-    with open(output_file, 'w') as f:
-        f.write("=================================================\n")
-        f.write("Network Performance Analysis for QKD Simulation\n")
-        f.write("=================================================\n\n")
-        
-        f.write("1. Basic Statistics:\n")
-        f.write(f"   Total events processed: {len(events)}\n")
-        f.write(f"   Simulation duration: {max(event['time'] for event in events):.2f} seconds\n")
-        f.write(f"   Number of active nodes: {len(node_activity)}\n\n")
-        
-        f.write("2. Performance Metrics:\n")
-        
+        # Generate visualizations
+        print("Generating visualizations...")
         if times and throughput:
-            avg_throughput = sum(throughput) / len(throughput)
-            peak_throughput = max(throughput)
-            f.write(f"   Average throughput: {avg_throughput:.2f} bits/s\n")
-            f.write(f"   Peak throughput: {peak_throughput:.2f} bits/s\n")
-        
-        f.write(f"   Packet loss ratio: {packet_loss_ratio:.2%}\n")
+            plot_throughput(times, throughput, os.path.join(graphs_dir, 'throughput.png'))
         
         if delays:
-            avg_delay = sum(delays) / len(delays)
-            min_delay = min(delays)
-            max_delay = max(delays)
-            jitter = np.std(delays) if len(delays) > 1 else 0
+            plot_delay_histogram(delays, os.path.join(graphs_dir, 'delay_histogram.png'))
+        
+        plot_node_activity(node_activity, os.path.join(graphs_dir, 'node_activity.png'))
+        plot_queue_delays(queue_delays, os.path.join(graphs_dir, 'queue_delays.png'))
+        
+        # Write statistics to output file
+        print(f"Writing statistics to: {output_file}")
+        with open(output_file, 'w') as f:
+            f.write("=================================================\n")
+            f.write("Network Performance Analysis for QKD Simulation\n")
+            f.write("=================================================\n\n")
             
-            f.write(f"   Average end-to-end delay: {avg_delay:.4f} seconds\n")
-            f.write(f"   Minimum delay: {min_delay:.4f} seconds\n")
-            f.write(f"   Maximum delay: {max_delay:.4f} seconds\n")
-            f.write(f"   Delay jitter: {jitter:.4f} seconds\n")
-        
-        f.write(f"   Protocol overhead: {protocol_overhead:.2f}%\n\n")
-        
-        f.write("3. Node Activity:\n")
-        for node, stats in sorted(node_activity.items()):
-            f.write(f"   Node {node}:\n")
-            f.write(f"     Packets sent: {stats['sent']}\n")
-            f.write(f"     Packets received: {stats['received']}\n")
-            f.write(f"     Packets dropped: {stats['dropped']}\n")
-            if stats['sent'] > 0:
-                drop_ratio = stats['dropped'] / stats['sent']
-                f.write(f"     Drop ratio: {drop_ratio:.2%}\n")
-            f.write("\n")
-        
-        f.write("4. Queueing Analysis:\n")
-        for node, delay in sorted(queue_delays.items()):
-            f.write(f"   Node {node} average queueing delay: {delay*1000:.2f} ms\n")
-        
-        f.write("\n=================================================\n")
-        f.write("Analysis complete. See 'graphs/' directory for visualizations.\n")
+            f.write("1. Basic Statistics:\n")
+            f.write(f"   Total events processed: {len(events)}\n")
+            f.write(f"   Simulation duration: {max(event['time'] for event in events):.2f} seconds\n")
+            f.write(f"   Number of active nodes: {len(node_activity)}\n\n")
+            
+            f.write("2. Performance Metrics:\n")
+            
+            if times and throughput:
+                avg_throughput = sum(throughput) / len(throughput)
+                peak_throughput = max(throughput)
+                f.write(f"   Average throughput: {avg_throughput:.2f} bits/s\n")
+                f.write(f"   Peak throughput: {peak_throughput:.2f} bits/s\n")
+            
+            f.write(f"   Packet loss ratio: {packet_loss_ratio:.2%}\n")
+            
+            if delays:
+                avg_delay = sum(delays) / len(delays)
+                min_delay = min(delays)
+                max_delay = max(delays)
+                jitter = np.std(delays) if len(delays) > 1 else 0
+                
+                f.write(f"   Average end-to-end delay: {avg_delay:.4f} seconds\n")
+                f.write(f"   Minimum delay: {min_delay:.4f} seconds\n")
+                f.write(f"   Maximum delay: {max_delay:.4f} seconds\n")
+                f.write(f"   Delay jitter: {jitter:.4f} seconds\n")
+            
+            f.write(f"   Protocol overhead: {protocol_overhead:.2f}%\n\n")
+            
+            f.write("3. Node Activity:\n")
+            for node, stats in sorted(node_activity.items()):
+                f.write(f"   Node {node}:\n")
+                f.write(f"     Packets sent: {stats['sent']}\n")
+                f.write(f"     Packets received: {stats['received']}\n")
+                f.write(f"     Packets dropped: {stats['dropped']}\n")
+                if stats['sent'] > 0:
+                    drop_ratio = stats['dropped'] / stats['sent']
+                    f.write(f"     Drop ratio: {drop_ratio:.2%}\n")
+                f.write("\n")
+            
+            f.write("4. Queueing Analysis:\n")
+            for node, delay in sorted(queue_delays.items()):
+                f.write(f"   Node {node} average queueing delay: {delay*1000:.2f} ms\n")
+            
+            f.write("\n=================================================\n")
+            f.write("Analysis complete. See 'graphs/network/' directory for visualizations.\n")
+    
+    except Exception as e:
+        print(f"Error during analysis: {e}")
+        # Write error to output file
+        with open(output_file, 'w') as f:
+            f.write("=================================================\n")
+            f.write("Network Performance Analysis for QKD Simulation\n")
+            f.write("=================================================\n\n")
+            f.write(f"ERROR during analysis: {e}\n")
     
     print("Analysis complete!")
 

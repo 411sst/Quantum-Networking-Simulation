@@ -1,6 +1,12 @@
 #!/bin/bash
 # Master script to run all simulations and analysis for the 
-# Quantum Networking Simulation Project
+# Quantum Networking Simulation Project with improved error handling
+
+# Function to handle errors
+handle_error() {
+    echo -e "\nERROR: $1"
+    echo "Continuing with next step..."
+}
 
 echo "========================================================"
 echo "   Quantum Networking Simulation - Complete Execution   "
@@ -25,47 +31,48 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Function to run a simulation
+run_simulation() {
+    echo -e "\n=== Running $2 ==="
+    if [ -f "src/$1" ]; then
+        cd src
+        if ns "$1"; then
+            echo "$2 completed successfully."
+        else
+            handle_error "$2 failed."
+        fi
+        cd ..
+    else
+        handle_error "Script src/$1 not found."
+    fi
+}
+
 # Run all simulations
-echo -e "\n=== Running Advanced Multi-Node Network Simulation ==="
-cd src
-ns multi_node_network.tcl
-echo "Advanced multi-node simulation completed."
+run_simulation "multi_node_network.tcl" "Advanced Multi-Node Network Simulation"
+run_simulation "advanced_qkd_protocols.tcl" "Advanced QKD Protocols Simulation"
+run_simulation "basic_network.tcl" "Basic Network Simulation"
+run_simulation "qkd_simulation.tcl" "Standard QKD Simulation"
+run_simulation "traditional_encryption.tcl" "Traditional Encryption Simulation"
+run_simulation "eavesdropper_simulation.tcl" "Eavesdropper Simulation"
 
-echo -e "\n=== Running Advanced QKD Protocols Simulation ==="
-ns advanced_qkd_protocols.tcl
-echo "Advanced QKD protocols simulation completed."
+# Function to run an analysis script
+run_analysis() {
+    echo -e "\n=== Running $2 ==="
+    if [ -f "src/$1" ]; then
+        if python3 "src/$1" $3; then
+            echo "$2 completed successfully."
+        else
+            handle_error "$2 failed."
+        fi
+    else
+        handle_error "Script src/$1 not found."
+    fi
+}
 
-echo -e "\n=== Running Basic Network Simulation ==="
-ns basic_network.tcl
-echo "Basic network simulation completed."
-
-echo -e "\n=== Running Standard QKD Simulation ==="
-ns qkd_simulation.tcl
-echo "Standard QKD simulation completed."
-
-echo -e "\n=== Running Traditional Encryption Simulation ==="
-ns traditional_encryption.tcl
-echo "Traditional encryption simulation completed."
-
-echo -e "\n=== Running Eavesdropper Simulation ==="
-ns eavesdropper_simulation.tcl
-echo "Eavesdropper simulation completed."
-
-# Return to main directory
-cd ..
-
-# Run analysis scripts
-echo -e "\n=== Running Protocol Analysis ==="
-python3 src/protocol_analyzer.py results/bb84_protocol.txt results/b92_protocol.txt results/protocol_comparison.txt
-echo "Protocol analysis completed."
-
-echo -e "\n=== Running Network Performance Analysis ==="
-python3 src/network_analyzer.py results/multi_node_trace.tr results/network_metrics.txt
-echo "Network performance analysis completed."
-
-echo -e "\n=== Running Comprehensive Data Analysis ==="
-python3 src/data_analyzer.py
-echo "Comprehensive data analysis completed."
+# Run analysis scripts with error handling
+run_analysis "protocol_analyzer.py" "Protocol Analysis" "results/bb84_protocol.txt results/b92_protocol.txt results/protocol_comparison.txt"
+run_analysis "network_analyzer.py" "Network Performance Analysis" "results/multi_node_trace.tr results/network_metrics.txt"
+run_analysis "data_analyzer.py" "Comprehensive Data Analysis" ""
 
 echo -e "\n========================================================"
 echo "   Simulation and Analysis Complete   "

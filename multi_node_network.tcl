@@ -37,7 +37,7 @@ proc finish {} {
     close $netlog
     exec nam results/multi_node_nam.nam &
     puts "Generating performance statistics..."
-    exec python3 src/network_analyzer.py results/multi_node_trace.tr results/performance_stats.txt
+    exec python3 network_analyzer.py results/multi_node_trace.tr results/performance_stats.txt
     puts "Done. Check results/performance_stats.txt for detailed analysis."
     exit 0
 }
@@ -232,6 +232,36 @@ proc run_multi_hop_qkd {src repeater1 repeater2 dst log} {
     
     # Return estimated secure key rate
     return $end_to_end_rate
+}
+
+# Define a 'finish' procedure
+proc finish {} {
+    global ns tracefile namfile netlog
+    $ns flush-trace
+    close $tracefile
+    close $namfile
+    close $netlog
+    exec nam results/multi_node_nam.nam &
+    puts "Generating performance statistics..."
+    
+    # Check if we're in the src directory
+    if {[file exists "network_analyzer.py"]} {
+        # We are in the src directory
+        exec python3 network_analyzer.py results/multi_node_trace.tr results/performance_stats.txt
+    } elseif {[file exists "../src/network_analyzer.py"]} {
+        # We are in the root directory and src is a subdirectory
+        exec python3 ../src/network_analyzer.py results/multi_node_trace.tr results/performance_stats.txt
+    } else {
+        # Just try the relative path that's most likely to work
+        puts "Warning: Could not find network_analyzer.py, trying default path..."
+        catch {exec python3 network_analyzer.py results/multi_node_trace.tr results/performance_stats.txt} result
+        if {$result != ""} {
+            puts "Error running network_analyzer.py: $result"
+        }
+    }
+    
+    puts "Done. Check results/performance_stats.txt for detailed analysis."
+    exit 0
 }
 
 # Set up TCP connections for data traffic simulation
