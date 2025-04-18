@@ -12,22 +12,54 @@ Network Simulator 2 (NS2) is a discrete event network simulator used for researc
 
 ## 2. Setting Up Your Environment
 
-### Installing NS2
-Follow these steps to install NS2 on Ubuntu/Linux Mint:
+### First-time Installation
+Follow these steps to set up the environment on a fresh Ubuntu installation:
 
 ```bash
-sudo apt-get update
-sudo apt-get install ns2 nam
+# Update package lists
+sudo apt update
+
+# Install NS2 and required dependencies
+sudo apt install -y ns2 nam tcl8.6 tk8.6
+
+# Install Python venv support
+sudo apt install -y python3-venv python3-full
+
+# Set up directory structure
+chmod +x setup_directories.sh
+./setup_directories.sh
+
+# Create and activate Python virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Python dependencies
+pip install numpy matplotlib pandas networkx scipy
+
+# Make run script executable
+chmod +x src/utils/run_all.sh
 ```
 
-### Verifying Installation
-Check if NS2 is installed correctly:
+### Running the Project After Initial Setup
 
-```bash
-ns -v
-```
+Once you've completed the initial setup, you can run the project in the future with just three simple steps:
 
-You should see the NS2 version number.
+1. **Navigate to the project directory**:
+   ```bash
+   cd quantum-networking-simulation  # or your project directory
+   ```
+
+2. **Activate the virtual environment**:
+   ```bash
+   source venv/bin/activate
+   ```
+
+3. **Run the simulation script**:
+   ```bash
+   ./src/utils/run_all.sh
+   ```
+
+That's it! The script will execute all simulations and generate the results.
 
 ## 3. Understanding the Project Files
 
@@ -38,32 +70,17 @@ The core simulation files are written in TCL:
 - `qkd_simulation.tcl`: Implements the BB84 QKD protocol
 - `traditional_encryption.tcl`: Simulates AES encryption
 - `eavesdropper_simulation.tcl`: Compares both approaches with an eavesdropper
+- `multi_node_network.tcl`: Creates an advanced 6-node topology
+- `advanced_qkd_protocols.tcl`: Implements multiple QKD protocols (BB84, B92, E91)
 
-### Analysis Script
-The Python script `data_analyzer.py` processes the simulation outputs and generates graphs.
+### Analysis Scripts
+The Python scripts process simulation outputs and generate visualizations:
 
-## 4. Running Your First Simulation
+- `protocol_analyzer.py`: Analyzes and compares QKD protocol performance
+- `network_analyzer.py`: Analyzes network performance metrics
+- `data_analyzer.py`: Comprehensive data analysis and visualization
 
-### Basic Network
-Start with the basic network to ensure everything is working:
-
-```bash
-cd src
-ns basic_network.tcl
-```
-
-You should see a NAM window appear showing the network topology.
-
-### QKD Simulation
-Next, run the QKD simulation:
-
-```bash
-ns qkd_simulation.tcl
-```
-
-This will generate log files with QKD protocol details.
-
-## 5. Understanding the Output
+## 4. Understanding the Output
 
 ### Trace Files
 NS2 generates trace files (`.tr`) that contain detailed information about each packet, including:
@@ -77,48 +94,63 @@ Network Animator (NAM) files (`.nam`) provide a visual representation of the sim
 ### Log Files
 Custom log files (`.txt`) contain protocol-specific information like key bits, error rates, etc.
 
-## 6. Analyzing Results
+## 5. Viewing Results
 
-Run the data analyzer to create visual comparisons:
+After running the simulations, you can view the results:
 
 ```bash
-cd ..
-python3 src/data_analyzer.py
+# View protocol comparison visualizations
+ls graphs/protocols/
+
+# View network performance visualizations
+ls graphs/network/
+
+# View the comprehensive report
+less results/comparative_report.md
 ```
 
-Check the graphs directory for visual representations of:
-- Error rates with and without eavesdropping
-- Performance comparisons between QKD and AES
-- Security feature comparisons
+Key visualizations include:
+- QBER (Quantum Bit Error Rate) comparisons with and without eavesdropping
+- Key generation efficiency across different protocols
+- Eavesdropping detection capabilities
+- Protocol comparison radar charts
 
-## 7. Experiment Ideas
+## 6. Experiment Ideas
 
 Once you understand the basics, try these experiments:
 
 1. Modify the error threshold in QKD (default is 15%)
 2. Change the network topology by adding more nodes
-3. Implement a different QKD protocol like B92
+3. Implement different attack strategies for Eve
 4. Add network congestion to see its effect on both protocols
 
-## 8. Common Issues
+## 7. Common Issues
+
+### NS2 Command Not Found
+If you get "command not found" errors for ns, ensure NS2 is properly installed:
+```bash
+which ns
+```
+
+### Python Module Not Found
+If you get module import errors, make sure your virtual environment is activated:
+```bash
+source venv/bin/activate
+```
 
 ### NAM Not Opening
 If NAM doesn't open automatically, try running it manually:
-
 ```bash
-nam filename.nam &
+nam results/traces/multi_node_nam.nam &
 ```
 
-### Python Errors
-If you get errors with the data analyzer, ensure you have the required libraries:
+### Path Reference Errors
+If scripts can't find files, check path references in the run_all.sh script.
 
-```bash
-sudo apt-get install python3-matplotlib python3-numpy
-```
-
-## 9. Next Steps
+## 8. Next Steps
 
 After mastering the basics:
 1. Read the full project report to understand the theoretical background
 2. Explore the NS2 documentation to learn more about network simulation
 3. Research current real-world QKD implementations
+4. Try implementing additional QKD protocols
