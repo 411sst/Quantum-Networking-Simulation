@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import networkx as nx
+import warnings
 
 def ensure_directory(directory):
     """Ensure the specified directory exists."""
@@ -122,7 +123,7 @@ def create_network_visualization(output_dir):
             node_size=800, font_weight='bold')
     
     plt.title('Quantum Network Topology')
-    plt.tight_layout()
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
     plt.savefig(os.path.join(output_dir, 'network_topology.png'), dpi=300)
     plt.close()
     
@@ -154,6 +155,7 @@ def create_comparative_report(output_dir):
     
     print(f"Created comparative report at {report_file}")
     return report_file
+
 
 def main():
     print("Starting Simplified QKD Data Analysis...")
